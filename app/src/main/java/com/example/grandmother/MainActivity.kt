@@ -2,25 +2,60 @@ package com.example.grandmother
 
 import android.annotation.SuppressLint
 import android.content.ContentResolver
+import android.content.Context
+import android.content.Intent
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.provider.ContactsContract
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.AdapterView.OnItemClickListener
+import android.widget.GridView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import java.io.FileNotFoundException
 import java.io.IOException
 
-class MainActivity : AppCompatActivity() {
-    val contacts: MutableList<Contact> = mutableListOf()
+
+class MainActivity : AppCompatActivity(){
+    private val contacts: MutableList<Contact> = mutableListOf()
+    private var gridAdapter: GridAdapter? = null
+    private var gridView: GridView? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         getContacts()
 
+        gridView = findViewById(R.id.gridView)
+        gridAdapter = GridAdapter(applicationContext,contacts)
+        gridView?.adapter = gridAdapter
+
+        gridView?.setOnItemClickListener(OnItemClickListener { parent, view, position, id ->
+            val contact: Contact = contacts.elementAt(position)
+
+            val phone: String = contact.phone
+            val name: String = contact.name
+
+            Toast.makeText(applicationContext,"LLAMANDO: $name",Toast.LENGTH_SHORT).show()
+
+            val vibrator = applicationContext?.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            if (Build.VERSION.SDK_INT >= 26) {
+                vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                vibrator.vibrate(500)
+            }
+
+            val i = Intent(Intent.ACTION_CALL)
+            i.data = Uri.parse("tel:$phone")
+            startActivity(i)
+        })
     }
 
     @SuppressLint("Recycle", "Range")
